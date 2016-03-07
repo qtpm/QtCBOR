@@ -1,0 +1,4 @@
+name = "QtCBOR"
+author = "shibukawa.yoshiki"
+license = "Apache License v2.0"
+version = [1, 0, 0]
