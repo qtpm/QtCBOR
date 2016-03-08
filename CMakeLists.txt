@@ -45,7 +45,7 @@ include("CMakeExtra.txt")
 
 include_directories("${PROJECT_SOURCE_DIR}/src")
 
-add_library(qtcbor SHARED  ${PROJECT_SOURCE_DIR}/src/decoder.cpp ${PROJECT_SOURCE_DIR}/src/encoder.cpp ${PROJECT_SOURCE_DIR}/src/input.cpp ${PROJECT_SOURCE_DIR}/src/listener_debug.cpp ${PROJECT_SOURCE_DIR}/src/output_dynamic.cpp ${PROJECT_SOURCE_DIR}/src/output_static.cpp ${PROJECT_SOURCE_DIR}/src/qtcbor.cpp)
+add_library(qtcbor SHARED  ${PROJECT_SOURCE_DIR}/src/private/decoder.cpp ${PROJECT_SOURCE_DIR}/src/private/encoder.cpp ${PROJECT_SOURCE_DIR}/src/private/input.cpp ${PROJECT_SOURCE_DIR}/src/private/listener_debug.cpp ${PROJECT_SOURCE_DIR}/src/private/output_dynamic.cpp ${PROJECT_SOURCE_DIR}/src/private/output_static.cpp ${PROJECT_SOURCE_DIR}/src/qtcbor.cpp)
 SET_TARGET_PROPERTIES(qtcbor PROPERTIES VERSION ${QTCBOR_VERSION} SOVERSION ${QTCBOR_MAJOR_VERSION})
 qt5_use_modules(qtcbor Core)
 
@@ -55,7 +55,7 @@ qt5_use_modules(qtcbor Core)
 enable_testing()
 find_package(Qt5Test REQUIRED)
 
-add_executable(qtcbor_test ${PROJECT_SOURCE_DIR}/test/qtcbor_test.cpp ${PROJECT_SOURCE_DIR}/src/decoder.cpp ${PROJECT_SOURCE_DIR}/src/encoder.cpp ${PROJECT_SOURCE_DIR}/src/input.cpp ${PROJECT_SOURCE_DIR}/src/listener_debug.cpp ${PROJECT_SOURCE_DIR}/src/output_dynamic.cpp ${PROJECT_SOURCE_DIR}/src/output_static.cpp ${PROJECT_SOURCE_DIR}/src/qtcbor.cpp)
+add_executable(qtcbor_test ${PROJECT_SOURCE_DIR}/test/qtcbor_test.cpp ${PROJECT_SOURCE_DIR}/src/private/decoder.cpp ${PROJECT_SOURCE_DIR}/src/private/encoder.cpp ${PROJECT_SOURCE_DIR}/src/private/input.cpp ${PROJECT_SOURCE_DIR}/src/private/listener_debug.cpp ${PROJECT_SOURCE_DIR}/src/private/output_dynamic.cpp ${PROJECT_SOURCE_DIR}/src/private/output_static.cpp ${PROJECT_SOURCE_DIR}/src/qtcbor.cpp)
 add_test(NAME qtcbor_test COMMAND qtcbor_test WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/build)
 qt5_use_modules(qtcbor_test Test Core)
 
@@ -63,4 +63,4 @@ qt5_use_modules(qtcbor_test Test Core)
 # install setting
 
 INSTALL(TARGETS qtcbor LIBRARY DESTINATION lib)
-INSTALL(FILES ${PROJECT_SOURCE_DIR}/src/cbor.h ${PROJECT_SOURCE_DIR}/src/decoder.h ${PROJECT_SOURCE_DIR}/src/encoder.h ${PROJECT_SOURCE_DIR}/src/endian.h ${PROJECT_SOURCE_DIR}/src/input.h ${PROJECT_SOURCE_DIR}/src/listener.h ${PROJECT_SOURCE_DIR}/src/listener_debug.h ${PROJECT_SOURCE_DIR}/src/log.h ${PROJECT_SOURCE_DIR}/src/output.h ${PROJECT_SOURCE_DIR}/src/output_dynamic.h ${PROJECT_SOURCE_DIR}/src/output_static.h ${PROJECT_SOURCE_DIR}/src/qtcbor.h ${PROJECT_SOURCE_DIR}/src/qtcbor_global.h DESTINATION include/qtcbor)
+INSTALL(FILES ${PROJECT_SOURCE_DIR}/src/qtcbor.h ${PROJECT_SOURCE_DIR}/src/qtcbor_global.h DESTINATION include/qtcbor)

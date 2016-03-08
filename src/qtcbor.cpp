@@ -1,5 +1,5 @@
 #include "qtcbor.h"
-#include "cbor.h"
+#include "./private/cbor.h"
 #include <iostream>
 #include <QStack>
 #include <QList>

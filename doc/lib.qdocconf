@@ -1,0 +1,12 @@
+#include($QT_INSTALL_DOCS/global/qt-module-defaults.qdocconf)
+title       = QtCBOR Document
+description = description
+outputdir   = ../html
+headerdirs  += ../src
+sourcedirs  += ../src
+imagedirs   += .
+language = Cpp
+sources.fileextensions = "*.cpp *.qdoc *.mm *.qml"
+headers.fileextensions = "*.h *.ch *.h++ *.hh *.hpp *.hxx"
+
+Cpp.ignoretokens = QTCBORSHARED_EXPORT
