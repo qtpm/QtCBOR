@@ -255,7 +255,7 @@ public:
     virtual void on_array(int size) {
         this->listStack.append(new QVariantList());
         this->isMapStack.append(false);
-        if (this->isMapStack.last()) {
+        if (!this->isMapStack.empty() && this->isMapStack.last()) {
             this->keyStack.append(this->key);
         }
         this->remainedItemsStack.append(this->remainedItems);
@@ -264,7 +264,7 @@ public:
 
     virtual void on_map(int size)  {
         this->mapStack.append(new QMap<QString, QVariant>());
-        if (this->isMapStack.last()) {
+        if (!this->isMapStack.empty() && this->isMapStack.last()) {
             this->keyStack.append(this->key);
         }
         this->isMapStack.append(true);
