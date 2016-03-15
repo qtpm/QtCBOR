@@ -1,3 +1,4 @@
+#include(compat.qdocconf)
 #include($QT_INSTALL_DOCS/global/qt-module-defaults.qdocconf)
 title       = QtCBOR Document
 description = description

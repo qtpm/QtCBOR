@@ -5,6 +5,30 @@
 #include <QList>
 #include <QMap>
 
+/*!
+ * \namespace QCBOR
+ *
+ * \brief QCBOR namespaces contains converter functions related to \l{http://cbor.io/}{CBOR(RFC 7049 Concise Binary Object Representation)} format.
+ *
+ * This module supports the structured data that contains the following types:
+ *
+ * \list
+ * \li int
+ * \li double
+ * \li bool
+ * \li null(empty QVariant)
+ * \li QString
+ * \li QVariantList(QList<QVariant>)
+ * \li QStringList
+ * \li QMap<QString, QVariant>
+ * \endlist
+ *
+ * \inmodule QCBOR
+ */
+namespace QCBOR {
+
+}
+
 void encode(cbor::encoder& encoder, const QVariant &variant) {
     switch (variant.type()) {
     case QVariant::Int:
@@ -262,6 +286,11 @@ public:
     }
 };
 
+/*!
+ * \fn QByteArray QCBOR::pack(const QVariant variant)
+ *
+ * \brief pack function converts \a variant (QVariant) into QByteArray that has CBOR formated data.
+ */
 QByteArray QCBOR::pack(const QVariant variant)
 {
     cbor::output_dynamic output;
@@ -273,7 +302,11 @@ QByteArray QCBOR::pack(const QVariant variant)
 }
 
 
-
+/*!
+ * \fn QVariant QCBOR::unpack(const QByteArray &data)
+ *
+ * \brief unpack function converts CBOR formated \a data into QVariant
+ */
 QVariant QCBOR::unpack(const QByteArray &data) {
     Listener listener;
     cbor::input input((void*)data.data(), data.size());
