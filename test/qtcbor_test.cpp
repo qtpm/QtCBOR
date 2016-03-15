@@ -2,7 +2,6 @@
 #include <QtTest>
 #include "qtcbor.h"
 
-
 class TestQtCBOR : public QObject {
     Q_OBJECT
 
@@ -62,13 +61,7 @@ private Q_SLOTS:
     }
 
     void testPackUnpackNestedArray() {
-        QVariantList array;
-        QVariantList array2;
-        array.append(10);
-        array.append(true);
-        array.append(10.5);
-        array2.append("string");
-        array.append(array2);
+        QVariantList array{10, true, 10.5, QVariantList{"string"}};
 
         auto binary = QCBOR::pack(array);
         auto decoded = QCBOR::unpack(binary);
@@ -76,10 +69,7 @@ private Q_SLOTS:
     }
 
     void testPackUnpackStringList() {
-        QStringList array;
-        array.append("string1");
-        array.append("string2");
-        array.append("string3");
+        QStringList array{"string1", "string2", "string3"};
 
         auto binary = QCBOR::pack(array);
         auto decoded = QCBOR::unpack(binary);
@@ -87,11 +77,11 @@ private Q_SLOTS:
     }
 
     void testPackUnpackMap() {
-        QMap<QString, QVariant> map;
-        map.insert("integer", 10);
-        map.insert("bool", true);
-        map.insert("double", 10.5);
-        map.insert("string", "string");
+        QMap<QString, QVariant> map{
+            {"integer", 10},
+            {"bool", true},
+            {"double", 10.5},
+            {"string", "string"}};
 
         auto binary = QCBOR::pack(map);
         auto decoded = QCBOR::unpack(binary);
@@ -99,13 +89,26 @@ private Q_SLOTS:
     }
 
     void testPackUnpackNestedMap() {
-        QMap<QString, QVariant> map;
-        QMap<QString, QVariant> map2;
-        map.insert("integer", 10);
-        map.insert("bool", true);
-        map.insert("double", 10.5);
-        map2.insert("string", "string");
-        map.insert("map", map2);
+        QMap<QString, QVariant> map{
+            {"integer", 10},
+            {"bool", true},
+            {"double", 10.5},
+            {"map", QMap<QString, QVariant>{
+                {"string", "string"}
+            }}
+        };
+
+        auto binary = QCBOR::pack(map);
+        auto decoded = QCBOR::unpack(binary);
+        QCOMPARE(decoded.toMap(), map);
+    }
+
+    void testPackUnpackNestedMapAndList() {
+        QMap<QString, QVariant> map{
+            {"path", "/test"},
+            {"method", "method"},
+            {"params", QVariantList{"abc.png", 0777}}
+        };
 
         auto binary = QCBOR::pack(map);
         auto decoded = QCBOR::unpack(binary);

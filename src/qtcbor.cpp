@@ -99,11 +99,11 @@ class Listener : public cbor::listener {
     QStack<QString> keyStack;
 
     QString       key;
-    int           remainedItems;
+    int           remainedItems = 0;
 
     QVariant*     result;
-    bool          waitingKey;
-    const char*   error;
+    bool          waitingKey = false;
+    const char*   error = nullptr;
 
 public:
     explicit Listener() : result(nullptr), waitingKey(false), error(nullptr) {}
@@ -121,56 +121,57 @@ public:
         return *(this->result);
     }
 
-    void pushToParent(QVariant value) {
+    void popStack() {
+        for (;;) {
+            this->remainedItems--;
+            if (this->remainedItems > 0 || this->remainedItemsStack.empty()) {
+                return;
+            }
+            this->remainedItems = this->remainedItemsStack.pop();
+            if (this->isMapStack.last()) {
+                auto parent = this->mapStack.pop();
+                this->isMapStack.pop();
+                if (this->isMapStack.empty()) {
+                    this->result = new QVariant(*parent);
+                    return;
+                } else {
+                    if (this->isMapStack.last()) {
+                        this->waitingKey = false;
+                        this->key = this->keyStack.pop();
+                    }
+                    this->pushToParent(*parent, true);
+                }
+                delete parent;
+            } else {
+                auto parent = this->listStack.pop();
+                this->isMapStack.pop();
+                if (this->isMapStack.empty()) {
+                    this->result = new QVariant(*parent);
+                    return;
+                } else {
+                    if (this->isMapStack.last()) {
+                        this->waitingKey = false;
+                        this->key = this->keyStack.pop();
+                    }
+                    this->pushToParent(*parent, true);
+                }
+                delete parent;
+            }
+        }
+    }
+
+    void pushToParent(QVariant value, bool skipPop = false) {
         if (this->isMapStack.last()) {
             auto currentMap = this->mapStack.last();
             currentMap->insert(this->key, value);
             this->waitingKey = true;
-            for (;;) {
-                this->remainedItems--;
-                if (this->remainedItems == 0) {
-                    auto parent = this->mapStack.pop();
-                    this->isMapStack.pop();
-                    this->remainedItems = this->remainedItemsStack.pop();
-                    if (this->isMapStack.empty()) {
-                        this->result = new QVariant(*parent);
-                        break;
-                    } else {
-                        if (this->isMapStack.last()) {
-                            this->waitingKey = false;
-                            this->key = this->keyStack.pop();
-                        }
-                        this->pushToParent(*parent);
-                    }
-                    delete parent;
-                } else {
-                    break;
-                }
-            }
+            if (!skipPop)
+                this->popStack();
         } else {
             auto list = this->listStack.last();
             list->append(value);
-            for (;;) {
-                this->remainedItems--;
-                if (this->remainedItems == 0) {
-                    auto parent = this->listStack.pop();
-                    this->isMapStack.pop();
-                    this->remainedItems = this->remainedItemsStack.pop();
-                    if (this->isMapStack.empty()) {
-                        this->result = new QVariant(*parent);
-                        break;
-                    } else {
-                        if (this->isMapStack.last()) {
-                            this->waitingKey = false;
-                            this->key = this->keyStack.pop();
-                        }
-                        this->pushToParent(*parent);
-                    }
-                    delete parent;
-                } else {
-                    break;
-                }
-            }
+            if (!skipPop)
+                this->popStack();
         }
     }
 
@@ -254,17 +255,17 @@ public:
 
     virtual void on_array(int size) {
         this->listStack.append(new QVariantList());
-        this->isMapStack.append(false);
-        if (this->isMapStack.last()) {
+        if (!this->isMapStack.empty() && this->isMapStack.last()) {
             this->keyStack.append(this->key);
         }
+        this->isMapStack.append(false);
         this->remainedItemsStack.append(this->remainedItems);
         this->remainedItems = size;
     }
 
     virtual void on_map(int size)  {
         this->mapStack.append(new QMap<QString, QVariant>());
-        if (this->isMapStack.last()) {
+        if (!this->isMapStack.empty() && this->isMapStack.last()) {
             this->keyStack.append(this->key);
         }
         this->isMapStack.append(true);
