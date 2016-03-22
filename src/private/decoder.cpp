@@ -83,11 +83,11 @@ int sizeFromAdditionalInfo(uint8_t in)
         case 27:
             return 8;
     }
+    return 0;
 }
 
 void decoder::traverse()
 {
-    unsigned int temp;
     while (1)
     {
         if (_state == STATE_TYPE)

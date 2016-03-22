@@ -7,14 +7,21 @@ project(qtcbor)
 set(QTCBOR_MAJOR_VERSION 1)
 set(QTCBOR_MINOR_VERSION 0)
 set(QTCBOR_PATCH_VERSION 0)
-set(QTCBOR_VERSION
- ${QTCBOR_MAJOR_VERSION}.${QTCBOR_MINOR_VERSION}.${QTCBOR_PATCH_VERSION})
-set(CMAKE_BUILD_TYPE Debug)
-set(WORKDIR "build-debug")
+set(QTCBOR_VERSION 1.0.0)
 
+if(CMAKE_BUILD_TYPE MATCHES Release)
+    message("-- Release Build")
+    include_directories(build-release/include)
+    link_directories(build-release/lib)
+else()
+    message("-- Debug Build")
+    include_directories(build-debug/include)
+    link_directories(build-debug/lib)
+endif()
 
 # compiler setting
 
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 set(CMAKE_CXX_STANDARD 11)
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
@@ -43,52 +50,34 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 if(DEFINED ENV{QTDIR})
     set(CMAKE_PREFIX_PATH "$ENV{QTDIR}")
 endif()
-if(DEFINED ENV{QTPM_INCLUDE_PATH})
-    include_directories("$ENV{QTPM_INCLUDE_PATH}")
-endif()
-if(DEFINED ENV{QTPM_LIBRARY_PATH})
-    link_directories("$ENV{QTPM_LIBRARY_PATH}")
-endif()
 find_package(Qt5Core REQUIRED)
-
 
 # include extra settings
 
-include("CMakeExtra.txt")
+
 
 # build setting
 
 include_directories(src)
-set(sources src/private/decoder.cpp src/private/encoder.cpp src/private/input.cpp src/private/listener_debug.cpp src/private/output_dynamic.cpp src/private/output_static.cpp src/qtcbor.cpp)
-add_library(qtcbor SHARED ${sources})
-SET_TARGET_PROPERTIES(qtcbor PROPERTIES VERSION ${QTCBOR_VERSION} SOVERSION ${QTCBOR_MAJOR_VERSION})
+set(sources src/private/cbor.h src/private/decoder.cpp src/private/decoder.h src/private/encoder.cpp src/private/encoder.h src/private/endian.h src/private/input.cpp src/private/input.h src/private/listener.h src/private/listener_debug.cpp src/private/listener_debug.h src/private/log.h src/private/output.h src/private/output_dynamic.cpp src/private/output_dynamic.h src/private/output_static.cpp src/private/output_static.h src/qtcbor.cpp)
+add_library(qtcbor STATIC ${sources})
 qt5_use_modules(qtcbor Core)
-# build examples
-
-file(GLOB examples RELATIVE examples *.cpp)
-foreach(path IN LISTS examples)
-  get_filename_component(target ${path} NAME_WE)
-  add_executable(${target} ${path})
-  qt5_use_modules(${target} Core)
-  target_link_libraries(${target} qtcbor)
-endforeach()
-
 # enable tests
 
 enable_testing()
 find_package(Qt5Test REQUIRED)
 
-set(tests qtcbor_test)
+set(tests test/qtcbor_test.cpp)
 foreach(file IN LISTS tests)
-  add_executable(${file} test/${file}.cpp ${sources} ${extra_test_sources})
-  add_test(NAME ${file} COMMAND ${file})
-  qt5_use_modules(${file} Test Core)
+  get_filename_component(execname ${file} NAME_WE)
+  add_executable(${execname} ${file} ${sources} ${extra_test_sources})
+  add_test(NAME ${execname} COMMAND ${execname})
+  qt5_use_modules(${execname} Test Core)
 endforeach()
-
 
 # install setting
 
-install(TARGETS qtcbor LIBRARY DESTINATION lib)
+install(TARGETS qtcbor ARCHIVE DESTINATION lib)
 
 set(public_headers src/qtcbor.h src/qtcbor_global.h)
 install(FILES ${public_headers} DESTINATION include/qtcbor/)

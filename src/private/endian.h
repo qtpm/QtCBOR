@@ -66,7 +66,7 @@
 #	define be64toh(x) betoh64(x)
 #	define le64toh(x) letoh64(x)
 
-#elif (defined(__MINGW32__) || defined(__MINGW64__))
+#elif defined(__MINGW32__) || defined(__MINGW64__)
 
 #	define __bswap_16(x) \
 		((((x) & 0xff00) >> 8)\
