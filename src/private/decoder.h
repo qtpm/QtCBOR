@@ -6,69 +6,67 @@
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+	   http://www.apache.org/licenses/LICENSE-2.0
 
-	   Unless required by applicable law or agreed to in writing, software
-	   distributed under the License is distributed on an "AS IS" BASIS,
-	   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	   See the License for the specific language governing permissions and
-	   limitations under the License.
+		   Unless required by applicable law or agreed to in writing, software
+		   distributed under the License is distributed on an "AS IS" BASIS,
+		   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+   implied.
+		   See the License for the specific language governing permissions and
+		   limitations under the License.
 */
 
-
-#include "listener.h"
 #include "input.h"
+#include "listener.h"
 
-namespace cbor {
-    typedef enum {
-        STATE_TYPE,
-        STATE_PINT,
-        STATE_NINT,
-        STATE_BYTES_SIZE,
-        STATE_BYTES_DATA,
-        STATE_STRING_SIZE,
-        STATE_STRING_DATA,
-        STATE_ARRAY,
-        STATE_MAP,
-        STATE_TAG,
-        STATE_SPECIAL,
-        STATE_ERROR //< A state
-    } decoder_state;
+namespace cbor
+{
+typedef enum {
+	STATE_TYPE,
+	STATE_PINT,
+	STATE_NINT,
+	STATE_BYTES_SIZE,
+	STATE_BYTES_DATA,
+	STATE_STRING_SIZE,
+	STATE_STRING_DATA,
+	STATE_ARRAY,
+	STATE_MAP,
+	STATE_TAG,
+	STATE_SPECIAL,
+	STATE_ERROR //< A state
+} decoder_state;
 
+enum class majorType {
+	unsignedInteger,
+	signedInteger,
+	byteString,
+	utf8String,
+	array,
+	map,
+	tag,
+	floatingPoint,
+	simpleValue,
+};
 
-    enum class majorType
-    {
-        unsignedInteger,
-        signedInteger,
-        byteString,
-        utf8String,
-        array,
-        map,
-        tag,
-        floatingPoint,
-        simpleValue
-    };
+enum class simpleValue { False, True, Null, Undefined };
 
-    enum class simpleValue
-    {
-        False,
-        True,
-        Null,
-        Undefined
-    };
+class type
+{
+	majorType m_major;
+	size_t m_size;
+	uint8_t m_value;
 
-
-    class type
-    {
-        majorType m_major;
-        size_t m_size;
-        uint8_t m_value;
-    public:
-        type(const majorType& mt, const size_t& size, uint8_t v = 0):m_major(mt), m_size(size), m_value(v) {}
-        majorType major() const { return m_major; }
-        size_t size() const { return m_size; }
-        uint8_t directValue() const { return m_value; }
-    };
+public:
+	explicit type(const majorType& mt, const size_t& size, uint8_t v = 0)
+		: m_major(mt)
+		, m_size(size)
+		, m_value(v)
+	{
+	}
+	majorType major() const { return m_major; }
+	size_t size() const { return m_size; }
+	uint8_t directValue() const { return m_value; }
+};
 
 /*
 0: uint8_t, uint16_t, uint32_t, uint64_t
@@ -81,41 +79,42 @@ namespace cbor {
 7: half, float, double, bool, nullptr, break
 */
 
-    class decoder {
-    private:
-        listener *_listener;
-        input *_in;
-        decoder_state _state;
-        int _currentLength;
-    public:
-        decoder(input &in);
-        decoder(input &in, listener &listener);
-        ~decoder();
-        void run();
-        void set_listener(listener &listener_instance);
-        void traverse();
+class decoder
+{
+private:
+	listener* _listener;
+	input* _in;
+	decoder_state _state;
+	int _currentLength;
 
-        size_t offset() const { return _in->offset(); }
+public:
+	decoder(input& in);
+	decoder(input& in, listener& listener);
+	~decoder();
+	void run();
+	void set_listener(listener& listener_instance);
+	void traverse();
 
-        type peekType() const;
+	size_t offset() const { return _in->offset(); }
 
-        size_t read_map();
-        size_t read_array();
+	type peekType() const;
 
-        uint32_t read_uint();
-        uint64_t read_ulong();
+	size_t read_map();
+	size_t read_array();
 
-        int32_t read_int();
-        int64_t read_long();
+	uint32_t read_uint();
+	uint64_t read_ulong();
 
-        float read_float();
-        double read_double();
+	int32_t read_int();
+	int64_t read_long();
 
-        std::string read_string();
+	float read_float();
+	double read_double();
 
-        bool read_bool();
+	std::string read_string();
 
-        void skip();
-    };
+	bool read_bool();
+
+	void skip();
+};
 }
-

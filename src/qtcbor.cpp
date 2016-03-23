@@ -1,14 +1,16 @@
 #include "qtcbor.h"
 #include "./private/cbor.h"
-#include <iostream>
-#include <QStack>
 #include <QList>
 #include <QMap>
+#include <QStack>
+#include <iostream>
 
 /*!
  * \namespace QCBOR
  *
- * \brief QCBOR namespaces contains converter functions related to \l{http://cbor.io/}{CBOR(RFC 7049 Concise Binary Object Representation)} format.
+ * \brief QCBOR namespaces contains converter functions related to
+ * \l{http://cbor.io/}{CBOR(RFC 7049 Concise Binary Object Representation)}
+ * format.
  *
  * This module supports the structured data that contains the following types:
  *
@@ -25,293 +27,293 @@
  *
  * \inmodule QCBOR
  */
-namespace QCBOR {
-
+namespace QCBOR
+{
 }
 
-void encode(cbor::encoder& encoder, const QVariant &variant) {
-    switch (variant.type()) {
-    case QVariant::Int:
-        encoder.write_int(variant.toInt());
-        break;
-    case QVariant::Double:
-        encoder.write_double(variant.toDouble());
-        break;
-    case QVariant::Bool:
-        encoder.write_bool(variant.toBool());
-        break;
-    case QVariant::ByteArray:
-        {
-            auto buffer = variant.toByteArray();
-            encoder.write_bytes((const unsigned char *)buffer.constData(), buffer.size());
-        }
-        break;
-    case QVariant::String:
-        {
-            auto string = variant.toString().toUtf8();
-            encoder.write_string(string.constData(), string.size());
-        }
-        break;
-    case QVariant::List:
-        {
-            auto list = variant.toList();
-            encoder.write_array(list.size());
-            for (auto &el : list) {
-                encode(encoder, el);
-            }
-        }
-        break;
-    case QVariant::StringList:
-        {
-            auto list = variant.toStringList();
-            encoder.write_array(list.size());
-            for (auto &el : list) {
-                auto string = el.toUtf8();
-                encoder.write_string(string.constData(), string.size());
-            }
-        }
-        break;
-    case QVariant::Map:
-        {
-            auto map = variant.toMap();
-            encoder.write_map(map.size());
-            for (auto i = map.begin(); i != map.end(); i++) {
-                auto string = i.key().toUtf8();
-                encoder.write_string(string.constData(), string.size());
-                encode(encoder, i.value());
-            }
-        }
-        break;
-    default:
-        if (variant.isNull()) {
-            encoder.write_null();
-        } else {
-            std::cout << "no support type:" << variant.typeName() << std::endl;
-        }
-    }
+void encode(cbor::encoder& encoder, const QVariant& variant)
+{
+	switch (variant.type()) {
+		case QVariant::Int:
+			encoder.write_int(variant.toInt());
+			break;
+		case QVariant::Double:
+			encoder.write_double(variant.toDouble());
+			break;
+		case QVariant::Bool:
+			encoder.write_bool(variant.toBool());
+			break;
+		case QVariant::ByteArray: {
+			auto buffer = variant.toByteArray();
+			encoder.write_bytes((const unsigned char*)buffer.constData(), buffer.size());
+		} break;
+		case QVariant::String: {
+			auto string = variant.toString().toUtf8();
+			encoder.write_string(string.constData(), string.size());
+		} break;
+		case QVariant::List: {
+			auto list = variant.toList();
+			encoder.write_array(list.size());
+			for (auto& el : list) {
+				encode(encoder, el);
+			}
+		} break;
+		case QVariant::StringList: {
+			auto list = variant.toStringList();
+			encoder.write_array(list.size());
+			for (auto& el : list) {
+				auto string = el.toUtf8();
+				encoder.write_string(string.constData(), string.size());
+			}
+		} break;
+		case QVariant::Map: {
+			auto map = variant.toMap();
+			encoder.write_map(map.size());
+			for (auto i = map.begin(); i != map.end(); i++) {
+				auto string = i.key().toUtf8();
+				encoder.write_string(string.constData(), string.size());
+				encode(encoder, i.value());
+			}
+		} break;
+		default:
+			if (variant.isNull()) {
+				encoder.write_null();
+			} else {
+				std::cout << "no support type:" << variant.typeName() << std::endl;
+			}
+	}
 }
 
-class Listener : public cbor::listener {
-    QStack<QMap<QString, QVariant>*> mapStack;
-    QStack<QVariantList*> listStack;
-    QStack<bool>  isMapStack;
-    QStack<int>   remainedItemsStack;
-    QStack<QString> keyStack;
+class Listener : public cbor::listener
+{
+	QStack<QMap<QString, QVariant>*> mapStack;
+	QStack<QVariantList*> listStack;
+	QStack<bool> isMapStack;
+	QStack<int> remainedItemsStack;
+	QStack<QString> keyStack;
 
-    QString       key;
-    int           remainedItems = 0;
+	QString key;
+	int remainedItems = 0;
 
-    QVariant*     result;
-    bool          waitingKey = false;
-    const char*   error = nullptr;
+	QVariant* result;
+	bool waitingKey = false;
+	const char* error = nullptr;
 
 public:
-    explicit Listener() : result(nullptr), waitingKey(false), error(nullptr) {}
-    ~Listener() {
-        if (this->result != nullptr) {
-            delete this->result;
-        }
-    }
+	explicit Listener()
+		: result(nullptr)
+		, waitingKey(false)
+		, error(nullptr)
+	{
+	}
+	~Listener()
+	{
+		if (this->result != nullptr) {
+			delete this->result;
+		}
+	}
 
-    bool hasError() {
-        return this->error != nullptr;
-    }
+	bool hasError() { return this->error != nullptr; }
 
-    QVariant variant() {
-        return *(this->result);
-    }
+	QVariant variant() { return *(this->result); }
 
-    void popStack() {
-        for (;;) {
-            this->remainedItems--;
-            if (this->remainedItems > 0 || this->remainedItemsStack.empty()) {
-                return;
-            }
-            this->remainedItems = this->remainedItemsStack.pop();
-            if (this->isMapStack.last()) {
-                auto parent = this->mapStack.pop();
-                this->isMapStack.pop();
-                if (this->isMapStack.empty()) {
-                    this->result = new QVariant(*parent);
-                    return;
-                } else {
-                    if (this->isMapStack.last()) {
-                        this->waitingKey = false;
-                        this->key = this->keyStack.pop();
-                    }
-                    this->pushToParent(*parent, true);
-                }
-                delete parent;
-            } else {
-                auto parent = this->listStack.pop();
-                this->isMapStack.pop();
-                if (this->isMapStack.empty()) {
-                    this->result = new QVariant(*parent);
-                    return;
-                } else {
-                    if (this->isMapStack.last()) {
-                        this->waitingKey = false;
-                        this->key = this->keyStack.pop();
-                    }
-                    this->pushToParent(*parent, true);
-                }
-                delete parent;
-            }
-        }
-    }
+	void popStack()
+	{
+		for (;;) {
+			this->remainedItems--;
+			if (this->remainedItems > 0 || this->remainedItemsStack.empty()) {
+				return;
+			}
+			this->remainedItems = this->remainedItemsStack.pop();
+			if (this->isMapStack.last()) {
+				auto parent = this->mapStack.pop();
+				this->isMapStack.pop();
+				if (this->isMapStack.empty()) {
+					this->result = new QVariant(*parent);
+					return;
+				} else {
+					if (this->isMapStack.last()) {
+						this->waitingKey = false;
+						this->key = this->keyStack.pop();
+					}
+					this->pushToParent(*parent, true);
+				}
+				delete parent;
+			} else {
+				auto parent = this->listStack.pop();
+				this->isMapStack.pop();
+				if (this->isMapStack.empty()) {
+					this->result = new QVariant(*parent);
+					return;
+				} else {
+					if (this->isMapStack.last()) {
+						this->waitingKey = false;
+						this->key = this->keyStack.pop();
+					}
+					this->pushToParent(*parent, true);
+				}
+				delete parent;
+			}
+		}
+	}
 
-    void pushToParent(QVariant value, bool skipPop = false) {
-        if (this->isMapStack.last()) {
-            auto currentMap = this->mapStack.last();
-            currentMap->insert(this->key, value);
-            this->waitingKey = true;
-            if (!skipPop)
-                this->popStack();
-        } else {
-            auto list = this->listStack.last();
-            list->append(value);
-            if (!skipPop)
-                this->popStack();
-        }
-    }
+	void pushToParent(QVariant value, bool skipPop = false)
+	{
+		if (this->isMapStack.last()) {
+			auto currentMap = this->mapStack.last();
+			currentMap->insert(this->key, value);
+			this->waitingKey = true;
+			if (!skipPop)
+				this->popStack();
+		} else {
+			auto list = this->listStack.last();
+			list->append(value);
+			if (!skipPop)
+				this->popStack();
+		}
+	}
 
-    bool empty() {
-        return (this->isMapStack.empty());
-    }
+	bool empty() { return (this->isMapStack.empty()); }
 
-    virtual void on_integer(int value) {
-        if (this->empty()) {
-            this->result = new QVariant(value);
-        } else {
-            this->pushToParent(value);
-        }
-    }
+	virtual void on_integer(int value)
+	{
+		if (this->empty()) {
+			this->result = new QVariant(value);
+		} else {
+			this->pushToParent(value);
+		}
+	}
 
-    virtual void on_bool(bool value) {
-        if (this->empty()) {
-            this->result = new QVariant(value);
-        } else {
-            this->pushToParent(value);
-        }
-    }
-    virtual void on_null() {
-        if (this->empty()) {
-            this->result = new QVariant();
-        } else {
-            this->pushToParent(QVariant());
-        }
-    }
+	virtual void on_bool(bool value)
+	{
+		if (this->empty()) {
+			this->result = new QVariant(value);
+		} else {
+			this->pushToParent(value);
+		}
+	}
+	virtual void on_null()
+	{
+		if (this->empty()) {
+			this->result = new QVariant();
+		} else {
+			this->pushToParent(QVariant());
+		}
+	}
 
-    virtual void on_undefined() {
-        if (this->empty()) {
-            this->result = new QVariant();
-        } else {
-            this->pushToParent(QVariant());
-        }
-    }
+	virtual void on_undefined()
+	{
+		if (this->empty()) {
+			this->result = new QVariant();
+		} else {
+			this->pushToParent(QVariant());
+		}
+	}
 
-    virtual void on_half(float value) {
-        if (this->empty()) {
-            this->result = new QVariant(value);
-        } else {
-            this->pushToParent(value);
-        }
-    }
+	virtual void on_half(float value)
+	{
+		if (this->empty()) {
+			this->result = new QVariant(value);
+		} else {
+			this->pushToParent(value);
+		}
+	}
 
-    virtual void on_float(float value) {
-        if (this->empty()) {
-            this->result = new QVariant(value);
-        } else {
-            this->pushToParent(value);
-        }
-    }
+	virtual void on_float(float value)
+	{
+		if (this->empty()) {
+			this->result = new QVariant(value);
+		} else {
+			this->pushToParent(value);
+		}
+	}
 
-    virtual void on_double(double value) {
-        if (this->empty()) {
-            this->result = new QVariant(value);
-        } else {
-            this->pushToParent(value);
-        }
-    }
+	virtual void on_double(double value)
+	{
+		if (this->empty()) {
+			this->result = new QVariant(value);
+		} else {
+			this->pushToParent(value);
+		}
+	}
 
-    virtual void on_bytes(unsigned char *data, int size) {
-        if (this->empty()) {
-            this->result = new QVariant(QByteArray((const char*)data, size));
-        } else {
-            this->pushToParent(QByteArray((const char*)data, size));
-        }
-    }
+	virtual void on_bytes(unsigned char* data, int size)
+	{
+		if (this->empty()) {
+			this->result = new QVariant(QByteArray((const char*)data, size));
+		} else {
+			this->pushToParent(QByteArray((const char*)data, size));
+		}
+	}
 
-    virtual void on_string(std::string &str) {
-        if (this->waitingKey) {
-            this->key = QString::fromUtf8(str.c_str(), str.size());
-            this->waitingKey = false;
-        } else if (this->empty()) {
-            this->result = new QVariant(QString::fromUtf8(str.c_str(), str.size()));
-        } else {
-            this->pushToParent(QString::fromUtf8(str.c_str(), str.size()));
-        }
-    }
+	virtual void on_string(std::string& str)
+	{
+		if (this->waitingKey) {
+			this->key = QString::fromUtf8(str.c_str(), str.size());
+			this->waitingKey = false;
+		} else if (this->empty()) {
+			this->result = new QVariant(QString::fromUtf8(str.c_str(), str.size()));
+		} else {
+			this->pushToParent(QString::fromUtf8(str.c_str(), str.size()));
+		}
+	}
 
-    virtual void on_array(int size) {
-        this->listStack.append(new QVariantList());
-        if (!this->isMapStack.empty() && this->isMapStack.last()) {
-            this->keyStack.append(this->key);
-        }
-        this->isMapStack.append(false);
-        this->remainedItemsStack.append(this->remainedItems);
-        this->remainedItems = size;
-    }
+	virtual void on_array(int size)
+	{
+		this->listStack.append(new QVariantList());
+		if (!this->isMapStack.empty() && this->isMapStack.last()) {
+			this->keyStack.append(this->key);
+		}
+		this->isMapStack.append(false);
+		this->remainedItemsStack.append(this->remainedItems);
+		this->remainedItems = size;
+	}
 
-    virtual void on_map(int size)  {
-        this->mapStack.append(new QMap<QString, QVariant>());
-        if (!this->isMapStack.empty() && this->isMapStack.last()) {
-            this->keyStack.append(this->key);
-        }
-        this->isMapStack.append(true);
-        this->remainedItemsStack.append(this->remainedItems);
-        this->remainedItems = size;
-        this->waitingKey = true;
-    }
+	virtual void on_map(int size)
+	{
+		this->mapStack.append(new QMap<QString, QVariant>());
+		if (!this->isMapStack.empty() && this->isMapStack.last()) {
+			this->keyStack.append(this->key);
+		}
+		this->isMapStack.append(true);
+		this->remainedItemsStack.append(this->remainedItems);
+		this->remainedItems = size;
+		this->waitingKey = true;
+	}
 
-    virtual void on_tag(unsigned int tag)  {
+	virtual void on_tag(unsigned int tag) {}
 
-    }
+	virtual void on_special(unsigned int code) {}
 
-    virtual void on_special(unsigned int code)  {
-
-    }
-
-    virtual void on_error(const char *error)  {
-
-    }
+	virtual void on_error(const char* error) {}
 };
 
 /*!
  * \fn QByteArray QCBOR::pack(const QVariant variant)
  *
- * \brief pack function converts \a variant (QVariant) into QByteArray that has CBOR formated data.
+ * \brief pack function converts \a variant (QVariant) into QByteArray that has
+ * CBOR formated data.
  */
 QByteArray QCBOR::pack(const QVariant variant)
 {
-    cbor::output_dynamic output;
-    cbor::encoder encoder(output);
+	cbor::output_dynamic output;
+	cbor::encoder encoder(output);
 
-    encode(encoder, variant);
+	encode(encoder, variant);
 
-    return QByteArray((const char *)output.data(), output.size());
+	return QByteArray((const char*)output.data(), output.size());
 }
-
 
 /*!
  * \fn QVariant QCBOR::unpack(const QByteArray &data)
  *
  * \brief unpack function converts CBOR formated \a data into QVariant
  */
-QVariant QCBOR::unpack(const QByteArray &data) {
-    Listener listener;
-    cbor::input input((void*)data.data(), data.size());
-    cbor::decoder decoder(input, listener);
-    decoder.run();
-    return listener.variant();
+QVariant QCBOR::unpack(const QByteArray& data)
+{
+	Listener listener;
+	cbor::input input((void*)data.data(), data.size());
+	cbor::decoder decoder(input, listener);
+	decoder.run();
+	return listener.variant();
 }

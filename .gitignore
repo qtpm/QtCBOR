@@ -40,6 +40,7 @@ CMakeLists.txt.user
 build
 vendor
 qtpackage.user.toml
+dest
 
 # standard
 .DS_Store
