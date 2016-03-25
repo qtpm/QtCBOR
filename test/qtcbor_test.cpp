@@ -1,4 +1,4 @@
-#include "qtcbor.h"
+#include "qtcbor/qtcbor.h"
 #include <QString>
 #include <QtTest>
 

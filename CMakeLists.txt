@@ -9,14 +9,17 @@ set(QTCBOR_MINOR_VERSION 0)
 set(QTCBOR_PATCH_VERSION 0)
 set(QTCBOR_VERSION 1.0.0)
 
-if(CMAKE_BUILD_TYPE MATCHES Release)
-    message("-- Release Build")
-    include_directories(build-release/include)
-    link_directories(build-release/lib)
+if(NOT DEFINED QTPM_BUILD_DIR)
+    set(QTPM_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
+    set(QTPM_READ_SUBDIRECTORIES, TRUE)
 else()
-    message("-- Debug Build")
-    include_directories(build-debug/include)
-    link_directories(build-debug/lib)
+    set(QTPM_READ_SUBDIRECTORIES, FALSE)
+endif()
+
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../../../../vendor)
+    set(VENDOR_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
+else()
+    set(VENDOR_PATH ${CMAKE_CURRENT_SOURCE_DIR}/vendor)
 endif()
 
 # compiler setting
@@ -46,20 +49,21 @@ endif()
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 if(DEFINED ENV{QTDIR})
     set(CMAKE_PREFIX_PATH "$ENV{QTDIR}")
 endif()
 find_package(Qt5Core REQUIRED)
 
-# include extra settings
+# extra setting
 
-
+include("CMakeExtra.txt" OPTIONAL)
 
 # build setting
 
 include_directories(src)
-set(sources src/private/cbor.h src/private/decoder.cpp src/private/decoder.h src/private/encoder.cpp src/private/encoder.h src/private/endian.h src/private/input.cpp src/private/input.h src/private/listener.h src/private/listener_debug.cpp src/private/listener_debug.h src/private/log.h src/private/output.h src/private/output_dynamic.cpp src/private/output_dynamic.h src/private/output_static.cpp src/private/output_static.h src/qtcbor.cpp)
+set(sources src/qtcbor/private/cbor.h src/qtcbor/private/decoder.cpp src/qtcbor/private/decoder.h src/qtcbor/private/encoder.cpp src/qtcbor/private/encoder.h src/qtcbor/private/endian.h src/qtcbor/private/input.cpp src/qtcbor/private/input.h src/qtcbor/private/listener.h src/qtcbor/private/listener_debug.cpp src/qtcbor/private/listener_debug.h src/qtcbor/private/log.h src/qtcbor/private/output.h src/qtcbor/private/output_dynamic.cpp src/qtcbor/private/output_dynamic.h src/qtcbor/private/output_static.cpp src/qtcbor/private/output_static.h src/qtcbor/qtcbor.cpp src/qtcbor/qtcbor.h)
 add_library(qtcbor STATIC ${sources})
 qt5_use_modules(qtcbor Core)
 # enable tests
@@ -79,5 +83,5 @@ endforeach()
 
 install(TARGETS qtcbor ARCHIVE DESTINATION lib)
 
-set(public_headers src/qtcbor.h src/qtcbor_global.h)
+
 install(FILES ${public_headers} DESTINATION include/qtcbor/)
