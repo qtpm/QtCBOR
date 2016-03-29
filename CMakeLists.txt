@@ -9,15 +9,15 @@ set(QTCBOR_MINOR_VERSION 0)
 set(QTCBOR_PATCH_VERSION 0)
 set(QTCBOR_VERSION 1.0.0)
 
-if(NOT DEFINED QTPM_BUILD_DIR)
-    set(QTPM_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR})
-    set(QTPM_READ_SUBDIRECTORIES, TRUE)
+if(DEFINED QTPM_IS_ROOT_PROJECT)
+    set(READ_SUBDIRECTORIES FALSE)
 else()
-    set(QTPM_READ_SUBDIRECTORIES, FALSE)
+    set(READ_SUBDIRECTORIES TRUE)
+    set(QTPM_IS_ROOT_PROJECT FALSE)
 endif()
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../../../../vendor)
-    set(VENDOR_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../../vendor)
+    set(VENDOR_PATH ${CMAKE_CURRENT_SOURCE_DIR}/..)
 else()
     set(VENDOR_PATH ${CMAKE_CURRENT_SOURCE_DIR}/vendor)
 endif()
@@ -63,7 +63,25 @@ include("CMakeExtra.txt" OPTIONAL)
 # build setting
 
 include_directories(src)
-set(sources src/qtcbor/private/cbor.h src/qtcbor/private/decoder.cpp src/qtcbor/private/decoder.h src/qtcbor/private/encoder.cpp src/qtcbor/private/encoder.h src/qtcbor/private/endian.h src/qtcbor/private/input.cpp src/qtcbor/private/input.h src/qtcbor/private/listener.h src/qtcbor/private/listener_debug.cpp src/qtcbor/private/listener_debug.h src/qtcbor/private/log.h src/qtcbor/private/output.h src/qtcbor/private/output_dynamic.cpp src/qtcbor/private/output_dynamic.h src/qtcbor/private/output_static.cpp src/qtcbor/private/output_static.h src/qtcbor/qtcbor.cpp src/qtcbor/qtcbor.h)
+set(sources src/qtcbor/private/cbor.h
+    src/qtcbor/private/decoder.cpp
+    src/qtcbor/private/decoder.h
+    src/qtcbor/private/encoder.cpp
+    src/qtcbor/private/encoder.h
+    src/qtcbor/private/endian.h
+    src/qtcbor/private/input.cpp
+    src/qtcbor/private/input.h
+    src/qtcbor/private/listener.h
+    src/qtcbor/private/listener_debug.cpp
+    src/qtcbor/private/listener_debug.h
+    src/qtcbor/private/log.h
+    src/qtcbor/private/output.h
+    src/qtcbor/private/output_dynamic.cpp
+    src/qtcbor/private/output_dynamic.h
+    src/qtcbor/private/output_static.cpp
+    src/qtcbor/private/output_static.h
+    src/qtcbor/qtcbor.cpp
+    src/qtcbor/qtcbor.h)
 add_library(qtcbor STATIC ${sources})
 qt5_use_modules(qtcbor Core)
 # enable tests
@@ -74,9 +92,10 @@ find_package(Qt5Test REQUIRED)
 set(tests test/qtcbor_test.cpp)
 foreach(file IN LISTS tests)
   get_filename_component(execname ${file} NAME_WE)
-  add_executable(${execname} ${file} ${sources} ${extra_test_sources})
+  add_executable(${execname} ${file} ${extra_test_sources})
   add_test(NAME ${execname} COMMAND ${execname})
   qt5_use_modules(${execname} Test Core)
+  target_link_libraries(${execname} qtcbor )
 endforeach()
 
 # install setting

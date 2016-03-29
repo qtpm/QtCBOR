@@ -36,17 +36,14 @@ Example
 
 
    int main() {
-       QStringList array;
-       array.append("string1");
-       array.append("string2");
-       array.append("string3");
+       QVariantList array{10, 20.5, true, "string"};
 
        // You can store this byte array in file or send via socket
        QByteArray binary = QCBOR::pack(array);
 
        // Decoding is easy too
        QVariant decoded = QCBOR::unpack(binary);
-       auto array2 = decoded.toStringList();
+       auto array2 = decoded.toList();
    }
 
 Reference

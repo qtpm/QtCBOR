@@ -267,6 +267,9 @@ public:
 		this->isMapStack.append(false);
 		this->remainedItemsStack.append(this->remainedItems);
 		this->remainedItems = size;
+		if (size == 0) {
+			this->popStack();
+		}
 	}
 
 	virtual void on_map(int size)
@@ -279,6 +282,9 @@ public:
 		this->remainedItemsStack.append(this->remainedItems);
 		this->remainedItems = size;
 		this->waitingKey = true;
+		if (size == 0) {
+			this->popStack();
+		}
 	}
 
 	virtual void on_tag(unsigned int tag) {}

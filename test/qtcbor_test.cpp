@@ -57,11 +57,16 @@ private Q_SLOTS:
 
 	void testPackUnpackArray()
 	{
-		QVariantList array;
-		array.append(10);
-		array.append(true);
-		array.append(10.5);
-		array.append("string");
+		QVariantList array{10, true, 10.5, "string"};
+
+		auto binary = QCBOR::pack(array);
+		auto decoded = QCBOR::unpack(binary);
+		QCOMPARE(decoded.toList(), array);
+	}
+
+	void testPackUnpackEmptyArray()
+	{
+		QVariantList array{};
 
 		auto binary = QCBOR::pack(array);
 		auto decoded = QCBOR::unpack(binary);
@@ -90,6 +95,15 @@ private Q_SLOTS:
 	{
 		QMap<QString, QVariant> map{
 			{"integer", 10}, {"bool", true}, {"double", 10.5}, {"string", "string"}};
+
+		auto binary = QCBOR::pack(map);
+		auto decoded = QCBOR::unpack(binary);
+		QCOMPARE(decoded.toMap(), map);
+	}
+
+	void testPackUnpackEmptyMap()
+	{
+		QMap<QString, QVariant> map{};
 
 		auto binary = QCBOR::pack(map);
 		auto decoded = QCBOR::unpack(binary);
